@@ -1,6 +1,6 @@
 name: "BalealHome FRP Client"
 description: "FRP client (frpc 0.70.1, TOML) exposing Home Assistant via the BalealHome FRP server."
-version: "1.0.0"
+version: "1.0.1"
 slug: "frp_client_bh"
 init: false
 network: host
