@@ -1,19 +1,28 @@
 name: "BalealHome FRP Client"
-description: "FRP client (frpc 0.70.1, TOML) exposing Home Assistant via the BalealHome FRP server."
-version: "1.0.1"
+description: "FRP client (frpc 0.70.1, TOML) exposing Home Assistant via the BalealHome FRP server. Auto-detects the HA web port (HA 2026.8+ portless installs supported)."
+version: "1.1.0"
 slug: "frp_client_bh"
 init: false
 network: host
 startup: services
-privileged:
-  - NET_ADMIN
-devices:
-  - /dev/net/tun
+# Supervisor API access: run.sh reads the current Home Assistant web port
+# via bashio::core.port (Supervisor /core/info) when haport = 0 (auto).
+hassio_api: true
 host_network: true
+options:
+  serverip: "217.28.140.223"
+  serverport: 7000
+  token: "REPLACE_WITH_FRPS_TOKEN"
+  # 0 = auto-detect the HA port from the Supervisor API (recommended).
+  # Set a positive value only to override (e.g. 8123 on a legacy setup).
+  haport: 0
+  remoteport: 8123
+  encryption: true
+  compression: true
 schema:
   serverip: str
   serverport: int
-  token: str
+  token: password
   haport: int
   remoteport: int
   encryption: bool

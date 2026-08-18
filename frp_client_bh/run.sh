@@ -1,6 +1,11 @@
 #!/usr/bin/with-contenv bashio
 # Runtime: generate frpc.toml (TOML, frp 0.70.x) from the add-on options and start frpc.
-# TCP proxy: HA (127.0.0.1:haport, host_network) <-> frps remotePort.
+# TCP proxy: HA (127.0.0.1:<port>, host_network) <-> frps remotePort.
+#
+# haport = 0 (default) -> the local HA port is auto-detected from the Supervisor
+# API (bashio::core.port), so the tunnel follows the HA web-server port wherever
+# it moves (8123 legacy, 80 on HA 2026.8+ "portless" setups, or any custom value
+# set in Settings > System > Network > Web server). A positive haport overrides.
 set -eu
 
 SERVER_IP=$(bashio::config 'serverip')
@@ -10,6 +15,18 @@ HA_PORT=$(bashio::config 'haport')
 REMOTE_PORT=$(bashio::config 'remoteport')
 ENC=$(bashio::config 'encryption')
 COMP=$(bashio::config 'compression')
+
+if [ -z "${HA_PORT}" ] || [ "${HA_PORT}" = "null" ] || [ "${HA_PORT}" = "0" ]; then
+    if DETECTED=$(bashio::core.port) && [ -n "${DETECTED}" ] && [ "${DETECTED}" != "null" ]; then
+        HA_PORT="${DETECTED}"
+        bashio::log.info "Auto-detected Home Assistant port: ${HA_PORT}"
+    else
+        HA_PORT=8123
+        bashio::log.warning "Could not auto-detect the HA port via the Supervisor API; falling back to 8123"
+    fi
+else
+    bashio::log.info "Using manually configured HA port: ${HA_PORT} (set haport: 0 for auto-detection)"
+fi
 
 CONF=/etc/frpc.toml
 {
@@ -26,10 +43,10 @@ CONF=/etc/frpc.toml
     echo "localIP = \"127.0.0.1\""
     echo "localPort = ${HA_PORT}"
     echo "remotePort = ${REMOTE_PORT}"
-    [ "$ENC" = "true" ] && echo "transport.useEncryption = true"
-    [ "$COMP" = "true" ] && echo "transport.useCompression = true"
+    if [ "$ENC" = "true" ]; then echo "transport.useEncryption = true"; fi
+    if [ "$COMP" = "true" ]; then echo "transport.useCompression = true"; fi
 } > "$CONF"
 
 bashio::log.info "frpc 0.70.1 -> ${SERVER_IP}:${SERVER_PORT}; HA 127.0.0.1:${HA_PORT} <-> remote ${REMOTE_PORT}"
-cat "$CONF"
+grep -v '^auth.token' "$CONF"
 exec /usr/src/frpc -c "$CONF"
