@@ -1,6 +1,6 @@
 name: "BalealHome FRP Client"
 description: "FRP client (frpc 0.70.1, TOML) exposing Home Assistant via the BalealHome FRP server. Auto-detects the HA web port (HA 2026.8+ portless installs supported)."
-version: "1.2.0"
+version: "1.3.0"
 slug: "frp_client_bh"
 init: false
 network: host
@@ -17,6 +17,9 @@ options:
   # Set a positive value only to override (e.g. 8123 on a legacy setup).
   haport: 0
   remoteport: 8123
+  # Pre-opened work connections (frp transport.poolCount, frps caps at 50). 20 avoids
+  # "work connection pool is full, discarding" on dashboard bursts. v1.3.0.
+  poolcount: 20
   encryption: true
   compression: true
 schema:
@@ -25,6 +28,7 @@ schema:
   token: password
   haport: int
   remoteport: int
+  poolcount: "int(0,50)?"
   encryption: bool
   compression: bool
 arch:

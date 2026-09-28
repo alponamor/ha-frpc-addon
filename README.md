@@ -5,6 +5,15 @@ server (`<house>.balealhome.com`, e.g. `fhb`, `stal`) over a TCP tunnel. frp 0.7
 (frp requires frpc and frps to be the same version — off-the-shelf HA frpc add-ons bundle
 old/mismatched versions, so this fork pins 0.70.1).
 
+## v1.3.0 — work-connection pool (ATL-2026-0053)
+
+New option `poolcount` (default 20) → frpc `transport.poolCount`. With frp defaults frps keeps at most
+11 ready work connections per client (`min(poolCount 1, maxPoolCount 5) + 10`) and refills each one taken;
+a dashboard load opening more parallel connections overflows it and frpc logs
+`StartWorkConn contains error: work connection pool is full, discarding` (harmless, extra connections are
+dropped). With 20 (frps `transport.maxPoolCount = 50`) the pool holds 30 and 20 are ready up front.
+After updating an existing install, check that `poolcount: 20` appears in the add-on Configuration.
+
 ## v1.2.0 — several houses on one frps (ATL-2026-0051)
 
 The frpc proxy is named `homeassistant-<remoteport>` (was the fixed `homeassistant`). frps rejects a

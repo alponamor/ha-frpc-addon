@@ -13,6 +13,8 @@ SERVER_PORT=$(bashio::config 'serverport')
 TOKEN=$(bashio::config 'token')
 HA_PORT=$(bashio::config 'haport')
 REMOTE_PORT=$(bashio::config 'remoteport')
+POOL_COUNT=20
+if bashio::config.has_value 'poolcount'; then POOL_COUNT=$(bashio::config 'poolcount'); fi
 ENC=$(bashio::config 'encryption')
 COMP=$(bashio::config 'compression')
 
@@ -36,6 +38,7 @@ CONF=/etc/frpc.toml
     echo "auth.token = \"${TOKEN}\""
     echo "log.to = \"console\""
     echo "log.level = \"info\""
+    echo "transport.poolCount = ${POOL_COUNT}"
     echo ""
     echo "[[proxies]]"
     # Proxy names must be unique across ALL clients of one frps (no `user` prefix is set), so the
@@ -49,6 +52,6 @@ CONF=/etc/frpc.toml
     if [ "$COMP" = "true" ]; then echo "transport.useCompression = true"; fi
 } > "$CONF"
 
-bashio::log.info "frpc 0.70.1 -> ${SERVER_IP}:${SERVER_PORT}; HA 127.0.0.1:${HA_PORT} <-> remote ${REMOTE_PORT}"
+bashio::log.info "frpc 0.70.1 -> ${SERVER_IP}:${SERVER_PORT}; HA 127.0.0.1:${HA_PORT} <-> remote ${REMOTE_PORT}; pool ${POOL_COUNT}"
 grep -v '^auth.token' "$CONF"
 exec /usr/src/frpc -c "$CONF"
