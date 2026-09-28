@@ -1,9 +1,19 @@
 # BalealHome FRP Client — HA OS add-on (frpc 0.70.1, TOML)
 
 Home Assistant OS add-on running **frpc 0.70.1**, tunneling Home Assistant to the BalealHome FRP
-server (`fhb.balealhome.com`) over a TCP tunnel. frp 0.70.1 matches the BalealHome `frps 0.70.1`
+server (`<house>.balealhome.com`, e.g. `fhb`, `stal`) over a TCP tunnel. frp 0.70.1 matches the BalealHome `frps 0.70.1`
 (frp requires frpc and frps to be the same version — off-the-shelf HA frpc add-ons bundle
 old/mismatched versions, so this fork pins 0.70.1).
+
+## v1.2.0 — several houses on one frps (ATL-2026-0051)
+
+The frpc proxy is named `homeassistant-<remoteport>` (was the fixed `homeassistant`). frps rejects a
+second client that registers an already-used proxy name (`proxy [homeassistant] already exists`), so
+with the fixed name only ONE house could be connected at a time. `remoteport` is unique per house,
+hence so is the name. Existing 1.1.0 installs keep working (fhb: `homeassistant` on 8123); updating
+them is optional — the name changes, the tunnel does not.
+
+⚠ Every house MUST set its own `remoteport` (fhb 8123, stal 8124, …). The default 8123 is fhb's.
 
 ## v1.1.0 — port-agnostic (HA 2026.8 "minus the magic number")
 
@@ -55,12 +65,14 @@ HA itself listens on 80.
 
 ## Scaling to more houses
 
-Each house: its own `remoteport` here (8124, 8125…), added to frps `allowPorts`, `frps-svc-tunnels`,
-a `containerPort`, and a per-house Traefik Ingress + DNS A record. `haport` stays `0` (auto) —
+Each house: its own `remoteport` here (8124, 8125…) inside frps `allowPorts` (8123–8130), a
+`frps-svc-tunnels` port + `containerPort`, and a per-house Traefik Ingress + DNS A record — see
+`../README.md` (Houses table) and `../../docs/runbooks/ha-house-onboarding.md`. `haport` stays `0` (auto) —
 new HA OS installs (2026.8+) listen on port 80 and are detected automatically.
 
 ## Rollback
 
 Source versioned in the `gitadmin/atlanti-infra` repo at `frp/ha-frpc-addon/` (rollback tag
-`pre-ha-portless-2026-08-18`; GitHub deploy tag `v1.0.2` marks the pre-1.1.0 state). Disable/
+`pre-ha-portless-2026-08-18`; GitHub deploy tag `v1.0.2` marks the pre-1.1.0 state, `v1.1.0` the pre-1.2.0 state — ATL-2026-0051,
+infra rollback tag `pre-ha-stal-2026-09-28`). Disable/
 uninstall the add-on in HA; frps resources removed via the `frp/` rollback in the plan.

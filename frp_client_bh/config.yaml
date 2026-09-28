@@ -1,6 +1,6 @@
 name: "BalealHome FRP Client"
 description: "FRP client (frpc 0.70.1, TOML) exposing Home Assistant via the BalealHome FRP server. Auto-detects the HA web port (HA 2026.8+ portless installs supported)."
-version: "1.1.0"
+version: "1.2.0"
 slug: "frp_client_bh"
 init: false
 network: host

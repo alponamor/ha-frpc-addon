@@ -38,7 +38,9 @@ CONF=/etc/frpc.toml
     echo "log.level = \"info\""
     echo ""
     echo "[[proxies]]"
-    echo "name = \"homeassistant\""
+    # Proxy names must be unique across ALL clients of one frps (no `user` prefix is set), so the
+    # name carries the house's remotePort — itself unique per house (frps allowPorts). v1.2.0.
+    echo "name = \"homeassistant-${REMOTE_PORT}\""
     echo "type = \"tcp\""
     echo "localIP = \"127.0.0.1\""
     echo "localPort = ${HA_PORT}"
